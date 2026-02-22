@@ -1,5 +1,5 @@
 # Use official Node.js runtime as base image
-FROM node:18
+FROM node:18-slim
 
 # Set working directory in container
 WORKDIR /app
@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies (without --production to avoid build issues)
-RUN npm install
+# Install dependencies
+RUN npm install --production
 
 # Copy application code
 COPY . .
