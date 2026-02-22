@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.env.local
+database/*.db
+database/*.sqlite
+public/uploads/*
+.vscode
+.idea
+.DS_Store
+*.log
+projects
+skills-cursor
