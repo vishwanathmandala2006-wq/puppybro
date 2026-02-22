@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer - PuppyBro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🐕 PuppyBro</h1>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="report-dog.html" class="nav-link">Report Dog</a>
+                <a href="lost-found.html" class="nav-link">Lost & Found</a>
+                <a href="adoption.html" class="nav-link">Adoption</a>
+                <a href="volunteer.html" class="nav-link active">Volunteer</a>
+                <a href="sterilization.html" class="nav-link">Sterilization</a>
+                <a href="track-status.html" class="nav-link">Track Status</a>
+                <div class="nav-auth" id="navAuth">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <span id="userName"></span>
+                    <button class="btn btn-outline" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Become a Volunteer</h2>
+        
+        <div class="form-container">
+            <div id="alertContainer"></div>
+            <p style="margin-bottom: 2rem; color: #666;">
+                Join our volunteer network and help make a difference in dog welfare. 
+                Volunteers are assigned to rescue cases and help coordinate rescue operations.
+            </p>
+            <form id="volunteerForm">
+                <div class="form-group">
+                    <label for="availability">Availability</label>
+                    <textarea id="availability" rows="3" placeholder="e.g., Weekends, Evenings, Flexible"></textarea>
+                    <small>Describe your availability for volunteer work</small>
+                </div>
+                <div class="form-group">
+                    <label for="experience">Experience</label>
+                    <textarea id="experience" rows="3" placeholder="e.g., Previous experience with dogs, animal rescue, etc."></textarea>
+                    <small>Share your relevant experience</small>
+                </div>
+                <div class="form-group">
+                    <label for="areas_covered">Areas You Can Cover</label>
+                    <input type="text" id="areas_covered" placeholder="e.g., Downtown, Park Street, City Center">
+                    <small>List areas where you can help</small>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Register as Volunteer</button>
+            </form>
+        </div>
+
+        <!-- Volunteer Cases Section -->
+        <div id="volunteerCases" style="margin-top: 3rem; display: none;">
+            <h3 style="margin-bottom: 1.5rem;">My Assigned Cases</h3>
+            <div id="casesContainer"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        checkAuthStatus();
+        
+        // Check if user is already a volunteer and load cases
+        async function checkVolunteerStatus() {
+            if (!isAuthenticated()) return;
+
+            try {
+                const response = await fetch('/api/rescue/volunteer/cases', {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    const cases = await response.json();
+                    if (cases && cases.length > 0) {
+                        document.getElementById('volunteerCases').style.display = 'block';
+                        displayVolunteerCases(cases);
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking volunteer status:', error);
+            }
+        }
+
+        function displayVolunteerCases(cases) {
+            const container = document.getElementById('casesContainer');
+            let html = '<div class="grid grid-2">';
+            cases.forEach(caseItem => {
+                html += `
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>Case ID: ${caseItem.case_id}</strong>
+                            <span class="badge badge-${caseItem.status.toLowerCase()}">${caseItem.status}</span>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Type:</strong> ${caseItem.issue_type}</p>
+                            <p><strong>Location:</strong> ${caseItem.location_area}</p>
+                            <p><strong>Description:</strong> ${caseItem.description}</p>
+                            <p><strong>Reporter:</strong> ${caseItem.reporter_name} (${caseItem.reporter_email})</p>
+                            ${caseItem.reporter_phone ? `<p><strong>Contact:</strong> ${caseItem.reporter_phone}</p>` : ''}
+                            ${caseItem.image_url ? `<img src="${caseItem.image_url}" style="max-width: 100%; border-radius: 5px; margin-top: 1rem;">` : ''}
+                            <div style="margin-top: 1rem;">
+                                <select id="status_${caseItem.id}" class="form-group" style="width: auto; display: inline-block; margin-right: 1rem;">
+                                    <option value="Assigned" ${caseItem.status === 'Assigned' ? 'selected' : ''}>Assigned</option>
+                                    <option value="Resolved" ${caseItem.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                                    <option value="Closed" ${caseItem.status === 'Closed' ? 'selected' : ''}>Closed</option>
+                                </select>
+                                <button onclick="updateCaseStatus(${caseItem.id})" class="btn btn-primary">Update Status</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        async function updateCaseStatus(caseId) {
+            const status = document.getElementById(`status_${caseId}`).value;
+            try {
+                const response = await fetch(`/api/rescue/volunteer/${caseId}/update-status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Status updated successfully!');
+                    checkVolunteerStatus();
+                } else {
+                    alert(data.error || 'Failed to update status');
+                }
+            } catch (error) {
+                alert('Error updating status: ' + error.message);
+            }
+        }
+
+        window.updateCaseStatus = updateCaseStatus;
+
+        // Handle volunteer registration
+        document.getElementById('volunteerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+
+            if (!isAuthenticated()) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Please login to register as volunteer</div>';
+                return;
+            }
+
+            const formData = {
+                availability: document.getElementById('availability').value || null,
+                experience: document.getElementById('experience').value || null,
+                areas_covered: document.getElementById('areas_covered').value || null
+            };
+
+            try {
+                await registerVolunteer(formData);
+                alertContainer.innerHTML = '<div class="alert alert-success">Volunteer registration successful! You will be assigned cases by admin.</div>';
+                document.getElementById('volunteerForm').reset();
+                setTimeout(() => {
+                    checkVolunteerStatus();
+                }, 1000);
+            } catch (error) {
+                alertContainer.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
+            }
+        });
+
+        // Check volunteer status on load
+        checkVolunteerStatus();
+    </script>
+</body>
+</html>

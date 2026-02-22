@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sterilization Report - PuppyBro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🐕 PuppyBro</h1>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="report-dog.html" class="nav-link">Report Dog</a>
+                <a href="lost-found.html" class="nav-link">Lost & Found</a>
+                <a href="adoption.html" class="nav-link">Adoption</a>
+                <a href="volunteer.html" class="nav-link">Volunteer</a>
+                <a href="track-status.html" class="nav-link">Track Status</a>
+                <div class="nav-auth" id="navAuth">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <span id="userName"></span>
+                    <button class="btn btn-outline" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Report Sterilization Need</h2>
+        
+        <div class="form-container">
+            <div id="alertContainer"></div>
+            <p style="margin-bottom: 2rem; color: #666;">
+                Report areas where sterilization programs are needed to control the stray dog population.
+            </p>
+            <form id="sterilizationForm">
+                <div class="form-group">
+                    <label for="location_area">Location Area *</label>
+                    <input type="text" id="location_area" name="location_area" placeholder="e.g., Downtown, Park Street" required>
+                </div>
+                <div class="form-group">
+                    <label for="location_description">Location Description</label>
+                    <textarea id="location_description" name="location_description" rows="2" placeholder="More specific location details"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="dog_count">Estimated Dog Count</label>
+                    <input type="number" id="dog_count" name="dog_count" min="1" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4" placeholder="Describe the situation, why sterilization is needed, etc."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Report</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        checkAuthStatus();
+        
+        document.getElementById('sterilizationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+
+            if (!isAuthenticated()) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Please login to submit a report</div>';
+                return;
+            }
+
+            const formData = {
+                location_area: document.getElementById('location_area').value,
+                location_description: document.getElementById('location_description').value || null,
+                dog_count: document.getElementById('dog_count').value ? parseInt(document.getElementById('dog_count').value) : null,
+                description: document.getElementById('description').value || null
+            };
+
+            try {
+                const result = await apiRequest('/sterilization/report', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+                
+                alertContainer.innerHTML = `
+                    <div class="alert alert-success">
+                        Sterilization report submitted successfully!<br>
+                        Report ID: <strong>#${result.reportId}</strong><br>
+                        <a href="track-status.html">Track your report status</a>
+                    </div>
+                `;
+                document.getElementById('sterilizationForm').reset();
+            } catch (error) {
+                alertContainer.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adoption - PuppyBro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🐕 PuppyBro</h1>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="report-dog.html" class="nav-link">Report Dog</a>
+                <a href="lost-found.html" class="nav-link">Lost & Found</a>
+                <a href="adoption.html" class="nav-link active">Adoption</a>
+                <a href="volunteer.html" class="nav-link">Volunteer</a>
+                <a href="sterilization.html" class="nav-link">Sterilization</a>
+                <a href="track-status.html" class="nav-link">Track Status</a>
+                <div class="nav-auth" id="navAuth">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <span id="userName"></span>
+                    <a href="admin-dashboard.html" id="adminLink" style="display: none;" class="nav-link">Admin</a>
+                    <button class="btn btn-outline" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Adopt a Dog</h2>
+        
+        <!-- Adoption Listings -->
+        <div id="listingsContainer">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Application Modal -->
+        <div id="applicationModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+            <div class="form-container" style="margin: 2rem auto; max-width: 600px;">
+                <h3>Adoption Application</h3>
+                <div id="applicationAlert"></div>
+                <form id="applicationForm">
+                    <input type="hidden" id="application_listing_id">
+                    <div class="form-group">
+                        <label>Applicant Name *</label>
+                        <input type="text" id="application_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="application_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone *</label>
+                        <input type="tel" id="application_phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Address *</label>
+                        <textarea id="application_address" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason for Adoption</label>
+                        <textarea id="application_reason" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Previous Experience with Dogs</label>
+                        <textarea id="application_experience" rows="3"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn btn-primary">Submit Application</button>
+                        <button type="button" class="btn btn-outline" onclick="closeApplicationModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/adoption.js"></script>
+    <script>
+        checkAuthStatus();
+        loadAdoptionListings();
+    </script>
+</body>
+</html>

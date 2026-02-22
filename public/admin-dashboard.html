@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - PuppyBro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🐕 PuppyBro</h1>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="admin-dashboard.html" class="nav-link active">Admin Dashboard</a>
+                <div class="nav-user">
+                    <span id="userName"></span>
+                    <button class="btn btn-outline" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container dashboard" style="padding: 2rem 0;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Admin Dashboard</h2>
+        
+        <!-- Dashboard Stats -->
+        <div class="dashboard-stats" id="dashboardStats">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="margin-top: 2rem;">
+            <div style="display: flex; gap: 1rem; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem;">
+                <button class="btn btn-outline" onclick="showTab('rescue')" id="tab-rescue">Rescue Reports</button>
+                <button class="btn btn-outline" onclick="showTab('adoption')" id="tab-adoption">Adoptions</button>
+                <button class="btn btn-outline" onclick="showTab('lostfound')" id="tab-lostfound">Lost & Found</button>
+                <button class="btn btn-outline" onclick="showTab('sterilization')" id="tab-sterilization">Sterilization</button>
+                <button class="btn btn-outline" onclick="showTab('volunteers')" id="tab-volunteers">Volunteers</button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="tabContent">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Listing Modal -->
+    <div id="addListingModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+        <div class="form-container" style="margin: 2rem auto; max-width: 600px;">
+            <h3>Add Dog for Adoption</h3>
+            <div id="addListingAlert"></div>
+            <form id="addListingForm">
+                <div class="form-group">
+                    <label>Dog Name *</label>
+                    <input type="text" id="al_dog_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Breed</label>
+                    <input type="text" id="al_breed">
+                </div>
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="text" id="al_age" placeholder="e.g., 2 years">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="al_gender">
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" id="al_color">
+                </div>
+                <div class="form-group">
+                    <label>Size</label>
+                    <select id="al_size">
+                        <option value="">Select</option>
+                        <option value="Small">Small</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Large">Large</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="al_description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Health Status</label>
+                    <input type="text" id="al_health_status" placeholder="e.g., Healthy, Vaccinated">
+                </div>
+                <div class="form-group">
+                    <label>Location Area</label>
+                    <input type="text" id="al_location_area" placeholder="e.g., Downtown Shelter">
+                </div>
+                <div class="form-group">
+                    <label>Photo</label>
+                    <input type="file" id="al_image" accept="image/*">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Add Listing</button>
+                    <button type="button" class="btn btn-outline" onclick="closeAddListingModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        checkAuthStatus();
+        
+        // Update page title and UI based on role
+        const user = getUser();
+        if (user) {
+            if (user.role === 'ngo') {
+                document.querySelector('h2').textContent = 'NGO Dashboard';
+                // Hide volunteers tab for NGO (only admin can assign volunteers)
+                const volunteersTab = document.getElementById('tab-volunteers');
+                if (volunteersTab) volunteersTab.style.display = 'none';
+            }
+        }
+        
+        if (!isAdminOrNGO()) {
+            alert('Admin or NGO access required');
+            window.location.href = 'index.html';
+        } else {
+            loadDashboard();
+        }
+    </script>
+</body>
+</html>

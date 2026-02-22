@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Status - PuppyBro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🐕 PuppyBro</h1>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="report-dog.html" class="nav-link">Report Dog</a>
+                <a href="lost-found.html" class="nav-link">Lost & Found</a>
+                <a href="adoption.html" class="nav-link">Adoption</a>
+                <a href="volunteer.html" class="nav-link">Volunteer</a>
+                <a href="sterilization.html" class="nav-link">Sterilization</a>
+                <a href="track-status.html" class="nav-link active">Track Status</a>
+                <div class="nav-auth" id="navAuth">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <span id="userName"></span>
+                    <button class="btn btn-outline" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Track Your Reports</h2>
+        
+        <div id="statusContainer">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        checkAuthStatus();
+
+        async function loadUserReports() {
+            const container = document.getElementById('statusContainer');
+            
+            if (!isAuthenticated()) {
+                container.innerHTML = '<div class="alert alert-info">Please <a href="login.html">login</a> to track your reports.</div>';
+                return;
+            }
+
+            try {
+                // Load rescue reports
+                const rescueReports = await apiRequest('/rescue/my-reports');
+                
+                // Load adoption applications
+                const adoptionApplications = await apiRequest('/adoption/my-applications');
+                
+                // Load sterilization reports
+                const sterilizationReports = await apiRequest('/sterilization/my-reports');
+
+                displayReports(rescueReports, adoptionApplications, sterilizationReports);
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
+            }
+        }
+
+        function displayReports(rescueReports, adoptionApplications, sterilizationReports) {
+            const container = document.getElementById('statusContainer');
+            let html = '';
+
+            // Rescue Reports
+            if (rescueReports && rescueReports.length > 0) {
+                html += '<h3 style="margin-bottom: 1rem;">Rescue Reports</h3>';
+                html += '<div class="grid grid-2">';
+                rescueReports.forEach(report => {
+                    html += `
+                        <div class="card">
+                            <div class="card-header">
+                                <strong>Case ID: ${report.case_id}</strong>
+                                <span class="badge badge-${report.status.toLowerCase()}">${report.status}</span>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Type:</strong> ${report.issue_type}</p>
+                                <p><strong>Location:</strong> ${report.location_area}</p>
+                                <p><strong>Description:</strong> ${report.description}</p>
+                                ${report.assigned_volunteer_id ? '<p><strong>Status:</strong> Assigned to volunteer</p>' : ''}
+                                ${report.admin_notes ? `<p><strong>Admin Notes:</strong> ${report.admin_notes}</p>` : ''}
+                                ${report.image_url ? `<img src="${report.image_url}" style="max-width: 100%; border-radius: 5px; margin-top: 1rem;">` : ''}
+                                <p><small>Reported: ${new Date(report.created_at).toLocaleString()}</small></p>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Adoption Applications
+            if (adoptionApplications && adoptionApplications.length > 0) {
+                html += '<h3 style="margin-top: 2rem; margin-bottom: 1rem;">Adoption Applications</h3>';
+                html += '<div class="grid grid-2">';
+                adoptionApplications.forEach(app => {
+                    html += `
+                        <div class="card">
+                            <div class="card-header">
+                                <strong>${app.dog_name}</strong>
+                                <span class="badge badge-${app.status.toLowerCase()}">${app.status}</span>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Breed:</strong> ${app.breed || 'Unknown'}</p>
+                                <p><strong>Applied Date:</strong> ${new Date(app.created_at).toLocaleDateString()}</p>
+                                ${app.admin_notes ? `<p><strong>Admin Notes:</strong> ${app.admin_notes}</p>` : ''}
+                                ${app.image_url ? `<img src="${app.dog_image}" style="max-width: 100%; border-radius: 5px; margin-top: 1rem;">` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Sterilization Reports
+            if (sterilizationReports && sterilizationReports.length > 0) {
+                html += '<h3 style="margin-top: 2rem; margin-bottom: 1rem;">Sterilization Reports</h3>';
+                html += '<div class="grid grid-2">';
+                sterilizationReports.forEach(report => {
+                    html += `
+                        <div class="card">
+                            <div class="card-header">
+                                <strong>Report #${report.id}</strong>
+                                <span class="badge badge-${report.status.toLowerCase()}">${report.status}</span>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Location:</strong> ${report.location_area}</p>
+                                ${report.dog_count ? `<p><strong>Dog Count:</strong> ${report.dog_count}</p>` : ''}
+                                ${report.description ? `<p><strong>Description:</strong> ${report.description}</p>` : ''}
+                                ${report.admin_notes ? `<p><strong>Admin Notes:</strong> ${report.admin_notes}</p>` : ''}
+                                <p><small>Reported: ${new Date(report.created_at).toLocaleDateString()}</small></p>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            if (!html) {
+                html = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>You haven\'t submitted any reports yet.</p></div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        loadUserReports();
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost & Found - PuppyBro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🐕 PuppyBro</h1>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="report-dog.html" class="nav-link">Report Dog</a>
+                <a href="lost-found.html" class="nav-link active">Lost & Found</a>
+                <a href="adoption.html" class="nav-link">Adoption</a>
+                <a href="volunteer.html" class="nav-link">Volunteer</a>
+                <a href="sterilization.html" class="nav-link">Sterilization</a>
+                <a href="track-status.html" class="nav-link">Track Status</a>
+                <div class="nav-auth" id="navAuth">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <span id="userName"></span>
+                    <button class="btn btn-outline" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Lost & Found Pets</h2>
+        
+        <!-- Report Forms -->
+        <div class="grid grid-2" style="margin-bottom: 3rem;">
+            <div class="card">
+                <h3 class="card-title">Report Lost Pet</h3>
+                <div id="lostAlert"></div>
+                <form id="lostForm">
+                    <div class="form-group">
+                        <label>Pet Name</label>
+                        <input type="text" id="lost_pet_name" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>Breed</label>
+                        <input type="text" id="lost_breed" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>Color *</label>
+                        <input type="text" id="lost_color" placeholder="e.g., Brown, Black, White" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Size</label>
+                        <select id="lost_size">
+                            <option value="">Select</option>
+                            <option value="Small">Small</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Large">Large</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Location Area *</label>
+                        <input type="text" id="lost_area" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="lost_description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Phone *</label>
+                        <input type="tel" id="lost_phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Photo</label>
+                        <input type="file" id="lost_image" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Submit</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Report Found Dog</h3>
+                <div id="foundAlert"></div>
+                <form id="foundForm">
+                    <div class="form-group">
+                        <label>Breed</label>
+                        <input type="text" id="found_breed" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>Color *</label>
+                        <input type="text" id="found_color" placeholder="e.g., Brown, Black, White" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Size</label>
+                        <select id="found_size">
+                            <option value="">Select</option>
+                            <option value="Small">Small</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Large">Large</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Location Area *</label>
+                        <input type="text" id="found_area" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="found_description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Phone *</label>
+                        <input type="tel" id="found_phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Photo</label>
+                        <input type="file" id="found_image" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 class="card-title">Search Lost & Found</h3>
+            <form id="searchForm" class="grid grid-3">
+                <div class="form-group">
+                    <label>Area</label>
+                    <input type="text" id="search_area" placeholder="Search by area">
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" id="search_color" placeholder="Search by color">
+                </div>
+                <div class="form-group">
+                    <label>Breed</label>
+                    <input type="text" id="search_breed" placeholder="Search by breed">
+                </div>
+            </form>
+            <button onclick="searchPets()" class="btn btn-primary">Search</button>
+        </div>
+
+        <!-- Results -->
+        <div id="searchResults"></div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/lostfound.js"></script>
+    <script>
+        checkAuthStatus();
+        // Auto-load lost and found pets when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            searchPets();
+        });
+    </script>
+</body>
+</html>

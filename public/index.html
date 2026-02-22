@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PuppyBro - Dog Welfare Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/splash.css">
+</head>
+<body>
+    <div id="splashScreen" class="splash-screen">
+        <span id="dogIcon" class="dog-icon">🐕</span>
+        <span id="splashText" class="splash-text"></span>
+        <span id="splashSubtext" class="splash-subtext"></span>
+    </div>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🐕 PuppyBro</h1>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="report-dog.html" class="nav-link">Report Dog</a>
+                <a href="lost-found.html" class="nav-link">Lost & Found</a>
+                <a href="adoption.html" class="nav-link">Adoption</a>
+                <a href="volunteer.html" class="nav-link">Volunteer</a>
+                <a href="sterilization.html" class="nav-link">Sterilization</a>
+                <a href="track-status.html" class="nav-link">Track Status</a>
+                <div class="nav-auth" id="navAuth">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                    <a href="register.html" class="btn btn-primary">Register</a>
+                    <a href="admin-login.html" class="btn btn-outline" style="margin-left: 0.5rem;">Admin</a>
+                    <a href="ngo-login.html" class="btn btn-outline" style="margin-left: 0.5rem;">NGO</a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <span id="userName"></span>
+                    <a href="admin-dashboard.html" id="adminLink" style="display: none;" class="nav-link">Admin</a>
+                    <button class="btn btn-outline" onclick="logout()">Logout</button>
+                </div>
+            </div>
+            <button class="nav-toggle" id="navToggle">☰</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h2>Welcome to PuppyBro</h2>
+            <p>Your trusted platform for dog welfare management</p>
+            <div class="hero-buttons">
+                <a href="report-dog.html" class="btn btn-primary btn-large">Report a Dog</a>
+                <a href="adoption.html" class="btn btn-outline btn-large">View Adoptions</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">What We Do</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🚨</div>
+                    <h3>Rescue Reporting</h3>
+                    <p>Report stray or injured dogs in your area. Our volunteers will respond quickly.</p>
+                    <a href="report-dog.html" class="btn btn-outline">Report Now</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Lost & Found</h3>
+                    <p>Report lost pets or found dogs. Search and match to reunite families.</p>
+                    <a href="lost-found.html" class="btn btn-outline">Search</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">❤️</div>
+                    <h3>Adoption</h3>
+                    <p>Find your perfect furry companion. Browse available dogs for adoption.</p>
+                    <a href="adoption.html" class="btn btn-outline">Browse</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤝</div>
+                    <h3>Volunteer</h3>
+                    <p>Join our volunteer network and help make a difference in dog welfare.</p>
+                    <a href="volunteer.html" class="btn btn-outline">Join Us</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏥</div>
+                    <h3>Sterilization</h3>
+                    <p>Report areas needing sterilization programs to control stray dog population.</p>
+                    <a href="sterilization.html" class="btn btn-outline">Report</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <h2 class="section-title">Our Impact</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="statRescues">0</div>
+                    <div class="stat-label">Rescue Cases</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statAdoptions">0</div>
+                    <div class="stat-label">Adoptions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statVolunteers">0</div>
+                    <div class="stat-label">Active Volunteers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statReunited">0</div>
+                    <div class="stat-label">Pets Reunited</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 PuppyBro - Dog Welfare Management System. B.Tech IV Semester RTP Project.</p>
+        </div>
+    </footer>
+
+    <script src="js/splash.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Check auth status on page load
+        checkAuthStatus();
+        
+        // Load stats from database
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('statRescues').textContent = stats.rescuesCases || '0';
+                    document.getElementById('statAdoptions').textContent = stats.adoptions || '0';
+                    document.getElementById('statVolunteers').textContent = stats.activeVolunteers || '0';
+                    document.getElementById('statReunited').textContent = stats.petsReunited || '0';
+                } else {
+                    // Fallback to zeros if API fails
+                    setDefaultStats();
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Fallback to zeros if API fails
+                setDefaultStats();
+            }
+        }
+
+        function setDefaultStats() {
+            document.getElementById('statRescues').textContent = '0';
+            document.getElementById('statAdoptions').textContent = '0';
+            document.getElementById('statVolunteers').textContent = '0';
+            document.getElementById('statReunited').textContent = '0';
+        }
+
+        // Load stats on page load
+        window.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>

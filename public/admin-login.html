@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - PuppyBro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🐕 PuppyBro</h1>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="login.html" class="nav-link">User Login</a>
+                <a href="ngo-login.html" class="nav-link">NGO Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="form-container">
+        <h2 style="text-align: center; margin-bottom: 0.5rem;">Admin Dashboard</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 2rem;">Manage all platform operations</p>
+        <div id="alertContainer"></div>
+        <form id="adminLoginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+        </form>
+        <p style="text-align: center; margin-top: 2rem; color: #666;">
+            Not an admin? <a href="login.html" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">User Login</a> • 
+            <a href="ngo-login.html" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">NGO Dashboard</a>
+        </p>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const data = await login(email, password);
+                
+                // Check if user is admin
+                if (data.user.role !== 'admin') {
+                    alertContainer.innerHTML = '<div class="alert alert-error">This account is not an admin account. Please use the regular login or NGO login.</div>';
+                    return;
+                }
+                
+                alertContainer.innerHTML = '<div class="alert alert-success">Login successful! Redirecting to Admin Dashboard...</div>';
+                setTimeout(() => {
+                    window.location.href = 'admin-dashboard.html';
+                }, 1000);
+            } catch (error) {
+                alertContainer.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>
