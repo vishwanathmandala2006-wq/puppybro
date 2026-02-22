@@ -1,0 +1,10 @@
+#!/bin/bash
+# Render deployment script
+
+echo "🚀 Installing dependencies..."
+npm install
+
+echo "📊 Initializing database..."
+npm run init-db
+
+echo "✅ Build complete!"
