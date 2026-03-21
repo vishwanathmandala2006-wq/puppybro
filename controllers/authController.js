@@ -15,38 +15,51 @@ const register = async (req, res) => {
 
         // Check if user already exists
         const existingUser = await db.promisify.get(
-            'SELECT id FROM users WHERE email = ?',
-            [email]
+            'SELECT id FROM users WHERE email = $1',
+            [email.toLowerCase().trim()]
         );
 
         if (existingUser) {
+            console.warn(`Registration attempt: email already exists - ${email}`);
             return res.status(400).json({ error: 'User with this email already exists' });
         }
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert user
-        const result = await db.promisify.run(
-            'INSERT INTO users (name, email, password, phone, address) VALUES (?, ?, ?, ?, ?)',
-            [name, email, hashedPassword, phone || null, address || null]
-        );
+        // Insert user with RETURNING to get the new ID
+        let result;
+        try {
+            result = await db.promisify.get(
+                'INSERT INTO users (name, email, password, phone, address, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
+                [name, email.toLowerCase().trim(), hashedPassword, phone || null, address || null, 'user']
+            );
+        } catch (dbErr) {
+            console.error('Database error during registration:', dbErr.message);
+            return res.status(500).json({ error: 'Error creating user account' });
+        }
+
+        if (!result) {
+            console.error('Failed to retrieve inserted user');
+            return res.status(500).json({ error: 'Error creating user account' });
+        }
 
         // Generate token
         const token = jwt.sign(
-            { userId: result.lastID, email },
+            { userId: result.id, email: result.email },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
 
+        console.log(`New user registered: ${email}`);
         res.status(201).json({
             message: 'User registered successfully',
             token,
             user: {
-                id: result.lastID,
-                name,
-                email,
-                role: 'user'
+                id: result.id,
+                name: result.name,
+                email: result.email,
+                role: result.role
             }
         });
     } catch (error) {
@@ -70,16 +83,18 @@ const login = async (req, res) => {
         }
 
         const user = await db.promisify.get(
-            'SELECT id, name, email, password, role FROM users WHERE email = ?',
-            [String(email).trim()]
+            'SELECT id, name, email, password, role FROM users WHERE email = $1',
+            [String(email).trim().toLowerCase()]
         );
 
         if (!user || !user.password) {
+            console.warn(`Login attempt failed: user not found for email ${email}`);
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         const isValidPassword = await bcrypt.compare(String(password), user.password);
         if (!isValidPassword) {
+            console.warn(`Login attempt failed: invalid password for email ${email}`);
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
@@ -95,9 +110,22 @@ const login = async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        console.log(`Login successful for user: ${user.email}`);
         res.json({
             message: 'Login successful',
             token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        console.error('Login error:', error?.message || error);
+        res.status(500).json({ error: 'Server error during login' });
+    }
+};
             user: {
                 id: user.id,
                 name: user.name,
@@ -123,30 +151,43 @@ const registerNGO = async (req, res) => {
 
         // Check if user already exists
         const existingUser = await db.promisify.get(
-            'SELECT id FROM users WHERE email = ?',
-            [email]
+            'SELECT id FROM users WHERE email = $1',
+            [email.toLowerCase().trim()]
         );
 
         if (existingUser) {
+            console.warn(`NGO registration attempt: email already exists - ${email}`);
             return res.status(400).json({ error: 'User with this email already exists' });
         }
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert NGO user
-        const result = await db.promisify.run(
-            'INSERT INTO users (name, email, password, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)',
-            [name, email, hashedPassword, phone || null, address || null, 'ngo']
-        );
+        // Insert NGO user with RETURNING
+        let result;
+        try {
+            result = await db.promisify.get(
+                'INSERT INTO users (name, email, password, phone, address, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
+                [name, email.toLowerCase().trim(), hashedPassword, phone || null, address || null, 'ngo']
+            );
+        } catch (dbErr) {
+            console.error('Database error during NGO registration:', dbErr.message);
+            return res.status(500).json({ error: 'Error creating NGO account' });
+        }
+
+        if (!result) {
+            console.error('Failed to retrieve inserted NGO user');
+            return res.status(500).json({ error: 'Error creating NGO account' });
+        }
 
         // Generate token
         const token = jwt.sign(
-            { userId: result.lastID, email },
+            { userId: result.id, email: result.email },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
 
+        console.log(`New NGO registered: ${email}`);
         res.status(201).json({
             message: 'NGO registered successfully',
             token,

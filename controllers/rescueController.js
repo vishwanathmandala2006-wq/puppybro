@@ -31,10 +31,10 @@ const submitReport = async (req, res) => {
         const caseId = generateCaseId();
 
         // Insert report (support both old schema without lat/lng/priority and new schema)
-        const result = await db.promisify.run(
+        const result = await db.promisify.get(
             `INSERT INTO rescue_reports 
             (case_id, user_id, location_area, location_description, latitude, longitude, issue_type, priority, description, image_url) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
             [caseId, userId, location_area, location_description || null, latitude || null, longitude || null, issue_type, priority, description, imageUrl]
         );
 
@@ -57,7 +57,7 @@ const getMyReports = async (req, res) => {
             `SELECT r.*, v.user_id as volunteer_user_id 
             FROM rescue_reports r 
             LEFT JOIN volunteers v ON r.assigned_volunteer_id = v.id 
-            WHERE r.user_id = ? 
+            WHERE r.user_id = $1 
             ORDER BY r.created_at DESC`,
             [userId]
         );
@@ -107,7 +107,7 @@ const getVolunteerCases = async (req, res) => {
             `SELECT r.*, u.name as reporter_name, u.email as reporter_email, u.phone as reporter_phone
             FROM rescue_reports r
             LEFT JOIN users u ON r.user_id = u.id
-            WHERE r.assigned_volunteer_id = ?
+            WHERE r.assigned_volunteer_id = $1
             ORDER BY r.created_at DESC`,
             [volunteerId]
         );
@@ -131,7 +131,7 @@ const assignVolunteer = async (req, res) => {
 
         // Verify volunteer exists
         const volunteer = await db.promisify.get(
-            'SELECT id FROM volunteers WHERE id = ? AND status = ?',
+            'SELECT id FROM volunteers WHERE id = $1 AND status = $2',
             [volunteerId, 'active']
         );
 
@@ -141,7 +141,7 @@ const assignVolunteer = async (req, res) => {
 
         // Update report
         await db.promisify.run(
-            'UPDATE rescue_reports SET assigned_volunteer_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE rescue_reports SET assigned_volunteer_id = $1, status = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
             [volunteerId, 'Assigned', reportId]
         );
 
@@ -165,7 +165,7 @@ const updateStatus = async (req, res) => {
 
         // Check if user has permission
         const report = await db.promisify.get(
-            'SELECT * FROM rescue_reports WHERE id = ?',
+            'SELECT * FROM rescue_reports WHERE id = $1',
             [reportId]
         );
 
@@ -182,7 +182,7 @@ const updateStatus = async (req, res) => {
 
         // Update status
         await db.promisify.run(
-            'UPDATE rescue_reports SET status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE rescue_reports SET status = $1, admin_notes = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
             [status, admin_notes || report.admin_notes, reportId]
         );
 

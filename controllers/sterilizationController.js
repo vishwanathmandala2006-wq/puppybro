@@ -12,16 +12,16 @@ const submitReport = async (req, res) => {
         }
 
         // Insert sterilization report
-        const result = await db.promisify.run(
+        const result = await db.promisify.get(
             `INSERT INTO sterilization_reports 
             (user_id, location_area, location_description, dog_count, description) 
-            VALUES (?, ?, ?, ?, ?)`,
+            VALUES ($1, $2, $3, $4, $5) RETURNING id`,
             [userId, location_area, location_description || null, dog_count || null, description || null]
         );
 
         res.status(201).json({
             message: 'Sterilization report submitted successfully',
-            reportId: result.lastID
+            reportId: result.id
         });
     } catch (error) {
         console.error('Submit sterilization report error:', error);
@@ -34,7 +34,7 @@ const getMyReports = async (req, res) => {
     try {
         const userId = req.user.id;
         const reports = await db.promisify.all(
-            'SELECT * FROM sterilization_reports WHERE user_id = ? ORDER BY created_at DESC',
+            'SELECT * FROM sterilization_reports WHERE user_id = $1 ORDER BY created_at DESC',
             [userId]
         );
 
@@ -74,7 +74,7 @@ const updateStatus = async (req, res) => {
         }
 
         await db.promisify.run(
-            'UPDATE sterilization_reports SET status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE sterilization_reports SET status = $1, admin_notes = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
             [status, admin_notes || null, reportId]
         );
 

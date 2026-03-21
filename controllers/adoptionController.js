@@ -48,16 +48,16 @@ const createListing = async (req, res) => {
         }
 
         // Insert listing
-        const result = await db.promisify.run(
+        const result = await db.promisify.get(
             `INSERT INTO adoption_listings 
             (dog_name, breed, age, gender, color, size, description, health_status, image_url, location_area, created_by) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
             [dog_name, breed || null, age || null, gender || null, color || null, size || null, description || null, health_status || null, imageUrl, location_area || null, userId]
         );
 
         res.status(201).json({
             message: 'Adoption listing created successfully',
-            listingId: result.lastID
+            listingId: result.id
         });
     } catch (error) {
         console.error('Create listing error:', error);
@@ -78,7 +78,7 @@ const applyForAdoption = async (req, res) => {
 
         // Verify listing exists and is available
         const listing = await db.promisify.get(
-            'SELECT id, status FROM adoption_listings WHERE id = ?',
+            'SELECT id, status FROM adoption_listings WHERE id = $1',
             [listing_id]
         );
 
@@ -92,7 +92,7 @@ const applyForAdoption = async (req, res) => {
 
         // Check if user already applied
         const existingApplication = await db.promisify.get(
-            'SELECT id FROM adoption_applications WHERE listing_id = ? AND user_id = ?',
+            'SELECT id FROM adoption_applications WHERE listing_id = $1 AND user_id = $2',
             [listing_id, userId]
         );
 
@@ -101,16 +101,16 @@ const applyForAdoption = async (req, res) => {
         }
 
         // Insert application
-        const result = await db.promisify.run(
+        const result = await db.promisify.get(
             `INSERT INTO adoption_applications 
             (listing_id, user_id, applicant_name, applicant_email, applicant_phone, applicant_address, reason, experience) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
             [listing_id, userId, applicant_name, applicant_email, applicant_phone, applicant_address, reason || null, experience || null]
         );
 
         res.status(201).json({
             message: 'Adoption application submitted successfully',
-            applicationId: result.lastID
+            applicationId: result.id
         });
     } catch (error) {
         console.error('Apply for adoption error:', error);
@@ -145,7 +145,7 @@ const getMyApplications = async (req, res) => {
             `SELECT aa.*, al.dog_name, al.breed, al.image_url as dog_image
             FROM adoption_applications aa
             LEFT JOIN adoption_listings al ON aa.listing_id = al.id
-            WHERE aa.user_id = ?
+            WHERE aa.user_id = $1
             ORDER BY aa.created_at DESC`,
             [userId]
         );
@@ -170,7 +170,7 @@ const updateApplicationStatus = async (req, res) => {
 
         // Get application
         const application = await db.promisify.get(
-            'SELECT listing_id FROM adoption_applications WHERE id = ?',
+            'SELECT listing_id FROM adoption_applications WHERE id = $1',
             [applicationId]
         );
 
@@ -180,14 +180,14 @@ const updateApplicationStatus = async (req, res) => {
 
         // Update application status
         await db.promisify.run(
-            'UPDATE adoption_applications SET status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE adoption_applications SET status = $1, admin_notes = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
             [status, admin_notes || null, applicationId]
         );
 
         // If approved, update listing status to Pending
         if (status === 'Approved') {
             await db.promisify.run(
-                'UPDATE adoption_listings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                'UPDATE adoption_listings SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
                 ['Pending', application.listing_id]
             );
         }
@@ -211,7 +211,7 @@ const updateListingStatus = async (req, res) => {
         }
 
         await db.promisify.run(
-            'UPDATE adoption_listings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE adoption_listings SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
             [status, listingId]
         );
 

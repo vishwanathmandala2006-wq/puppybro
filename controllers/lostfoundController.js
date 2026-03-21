@@ -16,7 +16,7 @@ const reportLostPet = async (req, res) => {
         const result = await db.promisify.run(
             `INSERT INTO lost_pets 
             (user_id, pet_name, breed, color, size, location_area, location_description, description, image_url, contact_phone) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
             [userId, pet_name || null, breed || null, color, size || null, location_area, location_description || null, description || null, imageUrl, contact_phone]
         );
 
@@ -46,7 +46,7 @@ const reportFoundDog = async (req, res) => {
         const result = await db.promisify.run(
             `INSERT INTO found_pets 
             (user_id, breed, color, size, location_area, location_description, description, image_url, contact_phone) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
             [userId, breed || null, color, size || null, location_area, location_description || null, description || null, imageUrl, contact_phone]
         );
 
@@ -73,15 +73,15 @@ const searchPets = async (req, res) => {
         let params = [];
 
         if (area) {
-            conditions.push('location_area LIKE ?');
+            conditions.push(`location_area LIKE $${params.length + 1}`);
             params.push(`%${area}%`);
         }
         if (color) {
-            conditions.push('color LIKE ?');
+            conditions.push(`color LIKE $${params.length + 1}`);
             params.push(`%${color}%`);
         }
         if (breed) {
-            conditions.push('breed LIKE ?');
+            conditions.push(`breed LIKE $${params.length + 1}`);
             params.push(`%${breed}%`);
         }
 
@@ -167,7 +167,7 @@ const updateLostPetStatus = async (req, res) => {
         }
 
         await db.promisify.run(
-            'UPDATE lost_pets SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE lost_pets SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
             [status, petId]
         );
 
@@ -190,7 +190,7 @@ const updateFoundPetStatus = async (req, res) => {
         }
 
         await db.promisify.run(
-            'UPDATE found_pets SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE found_pets SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
             [status, petId]
         );
 

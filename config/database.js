@@ -9,37 +9,42 @@ pool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
 });
 
+// Helper to convert SQLite ? placeholders to PostgreSQL $1, $2, etc.
+const convertPlaceholders = (sql) => {
+    let paramIndex = 1;
+    return sql.replace(/\?/g, () => `$${paramIndex++}`);
+};
+
 // Promisify methods to maintain compatibility with existing code
 pool.promisify = {
-    get: async (sql, params) => {
+    get: async (sql, params = []) => {
         try {
-            const pgSql = sql.replace(/\?/g, () => `$${params.length > 0 ? Object.keys(params).length + 1 : 1}`);
-            let paramArray = params;
-            if (Array.isArray(params)) {
-                paramArray = params;
-            }
-            const result = await pool.query(sql.replace(/\?/g, (_, i) => `$${i + 1}`), paramArray);
+            const pgSql = convertPlaceholders(sql);
+            const result = await pool.query(pgSql, params);
             return result.rows[0] || null;
         } catch (err) {
-            console.error('Database error in get:', err);
+            console.error('Database error in get:', err.message);
             throw err;
         }
     },
-    all: async (sql, params) => {
+    all: async (sql, params = []) => {
         try {
-            const result = await pool.query(sql.replace(/\?/g, (_, i) => `$${i + 1}`), params || []);
+            const pgSql = convertPlaceholders(sql);
+            const result = await pool.query(pgSql, params);
             return result.rows;
         } catch (err) {
-            console.error('Database error in all:', err);
+            console.error('Database error in all:', err.message);
             throw err;
         }
     },
-    run: async (sql, params) => {
+    run: async (sql, params = []) => {
         try {
-            const result = await pool.query(sql.replace(/\?/g, (_, i) => `$${i + 1}`), params || []);
-            return { lastID: result.rows[0]?.id, changes: result.rowCount };
+            const pgSql = convertPlaceholders(sql);
+            const result = await pool.query(pgSql, params);
+            // For INSERT/UPDATE/DELETE, return rows affected
+            return { lastID: null, changes: result.rowCount };
         } catch (err) {
-            console.error('Database error in run:', err);
+            console.error('Database error in run:', err.message);
             throw err;
         }
     }

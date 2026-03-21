@@ -14,14 +14,14 @@ const getDashboardStats = async (req, res) => {
             adoptionApplications,
             sterilizationReports
         ] = await Promise.all([
-            db.promisify.get('SELECT COUNT(*) as count FROM users WHERE role = ?', ['user']),
-            db.promisify.get('SELECT COUNT(*) as count FROM volunteers WHERE status = ?', ['active']),
+            db.promisify.get('SELECT COUNT(*) as count FROM users WHERE role = $1', ['user']),
+            db.promisify.get('SELECT COUNT(*) as count FROM volunteers WHERE status = $1', ['active']),
             db.promisify.get('SELECT COUNT(*) as count FROM rescue_reports'),
-            db.promisify.get('SELECT COUNT(*) as count FROM lost_pets WHERE status = ?', ['Lost']),
-            db.promisify.get('SELECT COUNT(*) as count FROM found_pets WHERE status = ?', ['Found']),
-            db.promisify.get('SELECT COUNT(*) as count FROM adoption_listings WHERE status = ?', ['Available']),
-            db.promisify.get('SELECT COUNT(*) as count FROM adoption_applications WHERE status = ?', ['Pending']),
-            db.promisify.get('SELECT COUNT(*) as count FROM sterilization_reports WHERE status = ?', ['Reported'])
+            db.promisify.get('SELECT COUNT(*) as count FROM lost_pets WHERE status = $1', ['Lost']),
+            db.promisify.get('SELECT COUNT(*) as count FROM found_pets WHERE status = $1', ['Found']),
+            db.promisify.get('SELECT COUNT(*) as count FROM adoption_listings WHERE status = $1', ['Available']),
+            db.promisify.get('SELECT COUNT(*) as count FROM adoption_applications WHERE status = $1', ['Pending']),
+            db.promisify.get('SELECT COUNT(*) as count FROM sterilization_reports WHERE status = $1', ['Reported'])
         ]);
 
         res.json({
@@ -50,10 +50,10 @@ const getPublicStats = async (req, res) => {
             volunteers,
             petReunited
         ] = await Promise.all([
-            db.promisify.get('SELECT COUNT(*) as count FROM rescue_reports WHERE status = ?', ['Resolved']),
-            db.promisify.get('SELECT COUNT(*) as count FROM adoption_listings WHERE status = ?', ['Adopted']),
-            db.promisify.get('SELECT COUNT(*) as count FROM volunteers WHERE status = ?', ['active']),
-            db.promisify.get('SELECT COUNT(*) as count FROM lost_pets WHERE status = ?', ['Found'])
+            db.promisify.get('SELECT COUNT(*) as count FROM rescue_reports WHERE status = $1', ['Resolved']),
+            db.promisify.get('SELECT COUNT(*) as count FROM adoption_listings WHERE status = $1', ['Adopted']),
+            db.promisify.get('SELECT COUNT(*) as count FROM volunteers WHERE status = $1', ['active']),
+            db.promisify.get('SELECT COUNT(*) as count FROM lost_pets WHERE status = $1', ['Found'])
         ]);
 
         res.json({
