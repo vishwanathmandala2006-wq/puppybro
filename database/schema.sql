@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS adoption_applications (
     experience TEXT,
     status VARCHAR(50) DEFAULT 'Pending' CHECK(status IN ('Pending', 'Approved', 'Rejected', 'Withdrawn')),
     admin_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     notes TEXT,
