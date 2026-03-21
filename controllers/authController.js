@@ -126,18 +126,6 @@ const login = async (req, res) => {
         res.status(500).json({ error: 'Server error during login' });
     }
 };
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
-        });
-    } catch (error) {
-        console.error('Login error:', error?.message || error);
-        res.status(500).json({ error: 'Server error during login' });
-    }
-};
 
 // Register NGO
 const registerNGO = async (req, res) => {
