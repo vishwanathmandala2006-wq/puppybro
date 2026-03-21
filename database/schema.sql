@@ -97,20 +97,30 @@ CREATE TABLE IF NOT EXISTS adoption_listings (
     health_status TEXT,
     image_url TEXT,
     location_area VARCHAR(255),
+    created_by INTEGER,
     status VARCHAR(50) DEFAULT 'Available' CHECK(status IN ('Available', 'Pending', 'Adopted')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Adoption Applications table
 CREATE TABLE IF NOT EXISTS adoption_applications (
     id SERIAL PRIMARY KEY,
-    adoption_listing_id INTEGER NOT NULL,
+    listing_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
+    applicant_name VARCHAR(255),
+    applicant_email VARCHAR(255),
+    applicant_phone VARCHAR(20),
+    applicant_address TEXT,
+    reason TEXT,
+    experience TEXT,
     status VARCHAR(50) DEFAULT 'Pending' CHECK(status IN ('Pending', 'Approved', 'Rejected', 'Withdrawn')),
+    admin_notes TEXT,
     application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     notes TEXT,
-    FOREIGN KEY (adoption_listing_id) REFERENCES adoption_listings(id) ON DELETE CASCADE,
+    FOREIGN KEY (listing_id) REFERENCES adoption_listings(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
