@@ -39,6 +39,11 @@ app.use('/api/adoption', adoptionRoutes);
 app.use('/api/sterilization', sterilizationRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Health check endpoint (for Render)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Serve frontend
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
