@@ -27,6 +27,38 @@ if (process.env.DATABASE_URL) {
 
     db = pool;
     console.log('✅ PostgreSQL database configured');
+    
+    // Initialize schema on first connection
+    db.initializeSchema = async () => {
+        try {
+            const client = await pool.connect();
+            try {
+                const schemaPath = path.join(__dirname, '..', 'database', 'schema.sql');
+                const schema = fs.readFileSync(schemaPath, 'utf8');
+                
+                // Split and execute each statement individually
+                const statements = schema.split(';')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+                    
+                for (const statement of statements) {
+                    try {
+                        await client.query(statement);
+                    } catch (err) {
+                        if (!err.message.includes('already exists')) {
+                            console.warn('Schema initialization warning:', err.message);
+                        }
+                    }
+                }
+                console.log('✅ PostgreSQL schema initialized/verified');
+            } finally {
+                client.release();
+            }
+        } catch (err) {
+            console.error('❌ Failed to initialize PostgreSQL schema:', err.message);
+            throw err;
+        }
+    };
 } else if (sqlite3) {
     // Use SQLite for local development
     isPostgres = false;
@@ -130,7 +162,11 @@ db.promisify = {
     run: async (sql, params = []) => {
         try {
             if (isPostgres) {
-                const pgSql = convertPlaceholders(sql);
+                let pgSql = convertPlaceholders(sql);
+                // Add RETURNING id for INSERT statements to get the inserted ID
+                if (pgSql.trim().toUpperCase().startsWith('INSERT') && !pgSql.includes('RETURNING')) {
+                    pgSql += ' RETURNING id';
+                }
                 const result = await db.query(pgSql, params);
                 return { lastID: result.rows[0]?.id, changes: result.rowCount };
             } else {

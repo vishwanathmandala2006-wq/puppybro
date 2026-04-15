@@ -58,11 +58,24 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
     console.log(`\n🚀 PuppyBro Server running on http://localhost:${PORT}`);
-    console.log(`� Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🗄️  Database: PostgreSQL (${process.env.DATABASE_URL ? 'configured' : 'using default'})`);
-    console.log(`\nDefault Admin Credentials:`);
-    console.log(`   Email: admin@puppybro.com`);
-    console.log(`   Password: admin123\n`);
+    
+    // Initialize PostgreSQL schema if available
+    if (db.initializeSchema) {
+        try {
+            await db.initializeSchema();
+            console.log(`\nDefault Admin Credentials:`);
+            console.log(`   Email: admin@puppybro.com`);
+            console.log(`   Password: admin123\n`);
+        } catch (err) {
+            console.error(`⚠️  Warning: Database initialization incomplete: ${err.message}`);
+        }
+    } else {
+        console.log(`\nDefault Admin Credentials:`);
+        console.log(`   Email: admin@puppybro.com`);
+        console.log(`   Password: admin123\n`);
+    }
 });
