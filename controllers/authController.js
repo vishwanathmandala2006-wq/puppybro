@@ -15,7 +15,7 @@ const register = async (req, res) => {
 
         // Check if user already exists
         const existingUser = await db.promisify.get(
-            'SELECT id FROM users WHERE email = $1',
+            'SELECT id FROM users WHERE email = ?',
             [email.toLowerCase().trim()]
         );
 
@@ -27,26 +27,26 @@ const register = async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert user with RETURNING to get the new ID
+        // Insert user
         let result;
         try {
-            result = await db.promisify.get(
-                'INSERT INTO users (name, email, password, phone, address, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
-                [name, email.toLowerCase().trim(), hashedPassword, phone || null, address || null, 'user']
+            result = await db.promisify.run(
+                'INSERT INTO users (name, email, password, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)',
+                [name.trim(), email.toLowerCase().trim(), hashedPassword, phone || null, address || null, 'user']
             );
         } catch (dbErr) {
             console.error('Database error during registration:', dbErr.message);
             return res.status(500).json({ error: 'Error creating user account' });
         }
 
-        if (!result) {
+        if (!result || !result.lastID) {
             console.error('Failed to retrieve inserted user');
             return res.status(500).json({ error: 'Error creating user account' });
         }
 
         // Generate token
         const token = jwt.sign(
-            { userId: result.id, email: result.email },
+            { userId: result.lastID, email: email.toLowerCase().trim() },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -56,10 +56,10 @@ const register = async (req, res) => {
             message: 'User registered successfully',
             token,
             user: {
-                id: result.id,
-                name: result.name,
-                email: result.email,
-                role: result.role
+                id: result.lastID,
+                name: name.trim(),
+                email: email.toLowerCase().trim(),
+                role: 'user'
             }
         });
     } catch (error) {
@@ -83,7 +83,7 @@ const login = async (req, res) => {
         }
 
         const user = await db.promisify.get(
-            'SELECT id, name, email, password, role FROM users WHERE email = $1',
+            'SELECT id, name, email, password, role FROM users WHERE email = ?',
             [String(email).trim().toLowerCase()]
         );
 
@@ -130,16 +130,21 @@ const login = async (req, res) => {
 // Register NGO
 const registerNGO = async (req, res) => {
     try {
-        const { name, email, password, phone, address, organization_name } = req.body;
+        const { name, email, password, phone, address, organization_name, contact_phone, designation } = req.body;
 
         // Validation
         if (!name || !email || !password || !organization_name) {
             return res.status(400).json({ error: 'Name, email, password, and organization name are required' });
         }
 
+        // Validate password strength
+        if (password.length < 8) {
+            return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+        }
+
         // Check if user already exists
         const existingUser = await db.promisify.get(
-            'SELECT id FROM users WHERE email = $1',
+            'SELECT id FROM users WHERE email = ?',
             [email.toLowerCase().trim()]
         );
 
@@ -151,38 +156,38 @@ const registerNGO = async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert NGO user with RETURNING
+        // Insert NGO user
         let result;
         try {
-            result = await db.promisify.get(
-                'INSERT INTO users (name, email, password, phone, address, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
-                [name, email.toLowerCase().trim(), hashedPassword, phone || null, address || null, 'ngo']
+            result = await db.promisify.run(
+                'INSERT INTO users (name, email, password, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)',
+                [name.trim(), email.toLowerCase().trim(), hashedPassword, phone || null, address || null, 'ngo']
             );
         } catch (dbErr) {
             console.error('Database error during NGO registration:', dbErr.message);
             return res.status(500).json({ error: 'Error creating NGO account' });
         }
 
-        if (!result) {
+        if (!result || !result.lastID) {
             console.error('Failed to retrieve inserted NGO user');
             return res.status(500).json({ error: 'Error creating NGO account' });
         }
 
         // Generate token
         const token = jwt.sign(
-            { userId: result.id, email: result.email },
+            { userId: result.lastID, email: email.toLowerCase().trim() },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        console.log(`New NGO registered: ${email}`);
+        console.log(`New NGO registered: ${email} (Organization: ${organization_name})`);
         res.status(201).json({
             message: 'NGO registered successfully',
             token,
             user: {
                 id: result.lastID,
-                name,
-                email,
+                name: name.trim(),
+                email: email.toLowerCase().trim(),
                 role: 'ngo'
             }
         });

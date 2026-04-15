@@ -1,23 +1,5 @@
 # Ignore everything in .cursor
 *
-# Un-ignore main project files
-!Dockerfile
-!.dockerignore
-!package.json
-!package-lock.json
-!server.js
-!README.md
-!Procfile
-!render.yaml
-!.gitignore
-!public/
-!routes/
-!controllers/
-!middleware/
-!config/
-!database/
-!scripts/
-!*.md
 # Un-ignore projects so we can descend to allowlisted subdirs
 !projects/
 projects/*

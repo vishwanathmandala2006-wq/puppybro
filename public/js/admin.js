@@ -434,34 +434,94 @@ async function submitAddListing(e) {
     const alertEl = document.getElementById('addListingAlert');
     alertEl.innerHTML = '';
 
+    const token = getToken();
+    const user = getUser();
+
+    console.log('[FORM-SUBMIT] Form submission started');
+    console.log('[FORM-SUBMIT] User:', { id: user?.id, role: user?.role });
+    console.log('[FORM-SUBMIT] Token exists:', !!token);
+
     const formData = new FormData();
-    formData.append('dog_name', document.getElementById('al_dog_name').value);
-    formData.append('breed', document.getElementById('al_breed').value || '');
-    formData.append('age', document.getElementById('al_age').value || '');
-    formData.append('gender', document.getElementById('al_gender').value || '');
-    formData.append('color', document.getElementById('al_color').value || '');
-    formData.append('size', document.getElementById('al_size').value || '');
-    formData.append('description', document.getElementById('al_description').value || '');
-    formData.append('health_status', document.getElementById('al_health_status').value || '');
-    formData.append('location_area', document.getElementById('al_location_area').value || '');
+    const fields = {
+        dog_name: document.getElementById('al_dog_name').value,
+        breed: document.getElementById('al_breed').value || '',
+        age: document.getElementById('al_age').value || '',
+        gender: document.getElementById('al_gender').value || '',
+        color: document.getElementById('al_color').value || '',
+        size: document.getElementById('al_size').value || '',
+        description: document.getElementById('al_description').value || '',
+        health_status: document.getElementById('al_health_status').value || '',
+        location_area: document.getElementById('al_location_area').value || ''
+    };
+
+    // Log field extraction
+    console.log('[FORM-SUBMIT] Fields:', {
+        dog_name: !!fields.dog_name,
+        location_area: !!fields.location_area,
+        fieldsCount: Object.values(fields).filter(v => v).length
+    });
+
+    // Append all fields
+    Object.entries(fields).forEach(([key, value]) => {
+        formData.append(key, value);
+        console.log(`[FORM-SUBMIT] Appended: ${key} = ${value ? value.substring(0, 20) : '(empty)'}`);
+    });
+
     const img = document.getElementById('al_image').files[0];
-    if (img) formData.append('image', img);
+    if (img) {
+        formData.append('image', img);
+        console.log('[FORM-SUBMIT] Image file:', { name: img.name, size: img.size, type: img.type });
+    } else {
+        console.log('[FORM-SUBMIT] No image file selected');
+    }
 
     try {
+        alertEl.innerHTML = '<div class="alert" style="background: #e3f2fd; color: #1976d2;">Submitting adoption listing...</div>';
+
+        console.log('[FETCH] Preparing request:', {
+            method: 'POST',
+            url: '/api/adoption/admin/listing',
+            tokenLength: token?.length,
+            isAdmin: user?.role === 'admin' || user?.role === 'ngo'
+        });
+
         const response = await fetch('/api/adoption/admin/listing', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${getToken()}` },
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
             body: formData
         });
+
+        console.log('[FETCH] Response received:', {
+            status: response.status,
+            statusText: response.statusText,
+            contentType: response.headers.get('content-type')
+        });
+        
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Failed to add listing');
+        
+        console.log('[FETCH] Response data:', data);
+        
+        if (!response.ok) {
+            const errorMsg = data.error || data.details || `HTTP ${response.status}`;
+            console.error('[FETCH] ✗ Request failed:', { status: response.status, error: data });
+            throw new Error(errorMsg);
+        }
+        
+        console.log('[FETCH] ✓ Success:', data);
         alertEl.innerHTML = '<div class="alert alert-success">Listing added successfully!</div>';
         setTimeout(() => {
             closeAddListingModal();
             loadTabContent('adoption');
         }, 1500);
     } catch (err) {
-        alertEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+        console.error('[FORM-SUBMIT] ✗ Error:', {
+            message: err.message,
+            stack: err.stack,
+            timestamp: new Date().toISOString()
+        });
+        alertEl.innerHTML = `<div class="alert alert-error"><strong>Error:</strong> ${err.message}</div>`;
     }
 }
 

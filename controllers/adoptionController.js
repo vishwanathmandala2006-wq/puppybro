@@ -37,31 +37,97 @@ const getAllListings = async (req, res) => {
 
 // Create adoption listing (Admin)
 const createListing = async (req, res) => {
+    const startTime = Date.now();
     try {
+        console.log('[ADOPTION-CREATE] Request received');
+        
+        // Validate authentication
+        if (!req.user || !req.user.id) {
+            console.error('[ADOPTION-CREATE] Missing authentication - req.user:', req.user);
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
         const userId = req.user.id;
         const { dog_name, breed, age, gender, color, size, description, health_status, location_area } = req.body;
         const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
+        console.log('[ADOPTION-CREATE] Input validation:', {
+            dog_name: !!dog_name,
+            userId,
+            hasImage: !!req.file,
+            fieldsCount: Object.keys(req.body).length
+        });
+
         // Validation
-        if (!dog_name) {
+        if (!dog_name || dog_name.trim() === '') {
+            console.warn('[ADOPTION-CREATE] Dog name missing');
             return res.status(400).json({ error: 'Dog name is required' });
         }
 
-        // Insert listing
-        const result = await db.promisify.get(
+        // Verify database connection
+        if (!db.promisify || !db.promisify.run) {
+            console.error('[ADOPTION-CREATE] Database connection error - promisify.run not available');
+            return res.status(500).json({ error: 'Database connection error' });
+        }
+
+        console.log('[ADOPTION-CREATE] About to insert with values:', {
+            dog_name: dog_name.trim(),
+            location_area,
+            created_by: userId,
+            imageUrl
+        });
+
+        // Insert listing using run() which returns lastID
+        const result = await db.promisify.run(
             `INSERT INTO adoption_listings 
             (dog_name, breed, age, gender, color, size, description, health_status, image_url, location_area, created_by) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
-            [dog_name, breed || null, age || null, gender || null, color || null, size || null, description || null, health_status || null, imageUrl, location_area || null, userId]
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                dog_name.trim(),
+                breed?.trim() || null,
+                age?.trim() || null,
+                gender || null,
+                color?.trim() || null,
+                size || null,
+                description?.trim() || null,
+                health_status?.trim() || null,
+                imageUrl,
+                location_area?.trim() || null,
+                userId
+            ]
         );
+
+        console.log('[ADOPTION-CREATE] Database insert result:', {
+            hasLastID: !!result?.lastID,
+            lastID: result?.lastID,
+            changes: result?.changes
+        });
+
+        if (!result || typeof result.lastID === 'undefined') {
+            console.error('[ADOPTION-CREATE] Insert failed - no lastID returned:', result);
+            return res.status(500).json({ error: 'Failed to create listing - database error', result });
+        }
+
+        console.log('[ADOPTION-CREATE] ✓ Success:', {
+            listingId: result.lastID,
+            duration: `${Date.now() - startTime}ms`
+        });
 
         res.status(201).json({
             message: 'Adoption listing created successfully',
-            listingId: result.id
+            listingId: result.lastID
         });
     } catch (error) {
-        console.error('Create listing error:', error);
-        res.status(500).json({ error: 'Server error creating listing' });
+        console.error('[ADOPTION-CREATE] ✗ Error:', {
+            message: error.message,
+            stack: error.stack,
+            errorType: error.name,
+            duration: `${Date.now() - startTime}ms`
+        });
+        res.status(500).json({ 
+            error: 'Server error creating listing',
+            details: error.message
+        });
     }
 };
 
@@ -127,12 +193,13 @@ const getAllApplications = async (req, res) => {
             FROM adoption_applications aa
             LEFT JOIN adoption_listings al ON aa.listing_id = al.id
             LEFT JOIN users u ON aa.user_id = u.id
-            ORDER BY aa.created_at DESC`
+            ORDER BY aa.created_at DESC`,
+            []
         );
 
         res.json(applications);
     } catch (error) {
-        console.error('Get applications error:', error);
+        console.error('Get applications error:', error?.message || error);
         res.status(500).json({ error: 'Server error fetching applications' });
     }
 };
