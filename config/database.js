@@ -1,5 +1,11 @@
 const { Pool } = require('pg');
-const sqlite3 = require('sqlite3').verbose();
+let sqlite3;
+try {
+    sqlite3 = require('sqlite3').verbose();
+} catch (err) {
+    // sqlite3 not available in production
+    sqlite3 = null;
+}
 const path = require('path');
 const fs = require('fs');
 
@@ -21,7 +27,7 @@ if (process.env.DATABASE_URL) {
 
     db = pool;
     console.log('✅ PostgreSQL database configured');
-} else {
+} else if (sqlite3) {
     // Use SQLite for local development
     isPostgres = false;
     const dbDir = path.join(__dirname, '..', 'database');
@@ -57,6 +63,11 @@ if (process.env.DATABASE_URL) {
             console.error('Error reading schema file:', err.message);
         }
     });
+} else {
+    console.error('❌ ERROR: No database configured!');
+    console.error('Set DATABASE_URL environment variable for PostgreSQL (production)');
+    console.error('Or ensure sqlite3 is installed for local development');
+    process.exit(1);
 }
 
 // Helper to convert SQLite ? placeholders to PostgreSQL $1, $2, etc.
