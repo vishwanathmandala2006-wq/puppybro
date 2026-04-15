@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+const db = require('./config/database');
 const { authLimiter, apiLimiter } = require('./middleware/rateLimit');
 
 // Import routes
