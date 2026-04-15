@@ -55,8 +55,8 @@ if (process.env.DATABASE_URL) {
                 client.release();
             }
         } catch (err) {
-            console.error('❌ Failed to initialize PostgreSQL schema:', err.message);
-            throw err;
+            console.warn('⚠️  PostgreSQL schema initialization deferred:', err.message);
+            // Don't throw - just warn. Server will continue running.
         }
     };
 } else if (sqlite3) {
